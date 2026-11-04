@@ -1,0 +1,50 @@
+name: Build APK
+run-name: build-${{ inputs.build_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: ID unik build
+        required: true
+      app_name:
+        description: Nama aplikasi
+        required: true
+      app_url:
+        description: URL website
+        required: true
+      app_id:
+        description: Package ID
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
+      - name: Build debug APK
+        env:
+          APP_NAME: ${{ inputs.app_name }}
+          APP_URL: ${{ inputs.app_url }}
+          APP_ID: ${{ inputs.app_id }}
+        run: |
+          gradle assembleDebug --no-daemon \
+            -PappName="$APP_NAME" \
+            -PappUrl="$APP_URL" \
+            -PappId="$APP_ID"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ inputs.build_id }}
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 1
